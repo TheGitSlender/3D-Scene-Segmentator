@@ -86,7 +86,7 @@ if selected == '🏠 Home':
     st.write("If you like this project, don't forget to visit my github by clicking the github icon in the top right corner and drop a ⭐🤩. It would be greatly appreciated! Thanks in advance!")
 
 
-    st.image("/workspaces/testing-app/superpoint_transformer/media/teaser_spt.png",output_format="auto")
+    st.image("./superpoint_transformer/media/teaser_spt.png",output_format="auto")
     st.markdown("""**Superpoint Transformer (SPT)** is a superpoint-based transformer 🤖 architecture that efficiently ⚡ 
     performs **semantic segmentation** on large-scale 3D scenes. This method includes a 
     fast algorithm that partitions 🧩 point clouds into a hierarchical superpoint 
