@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 import os
-
+from streamlit.components.v1 import html as html_vis
 
 
 
@@ -126,8 +126,11 @@ elif selected == '🛠️ Segmentation Tool':
     )
     input_path =st.file_uploader("Upload a 3d point cloud file.")
     data_path = ""
+    path_to_html = "/workspaces/testing-app/new_superpoint_transformer/my_interactive_visualization.html" 
 
-    st.html("./new_superpoint_transformer/my_interactive_visialization.html")
+    with open(path_to_html,'r') as f: 
+        html_data = f.read()
+    html_vis(html_data,scrolling=True,height =700,width=1200)
 
 
 
