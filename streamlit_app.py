@@ -136,5 +136,6 @@ elif selected == '🛠️ Segmentation Tool':
         """,
         unsafe_allow_html=True
     )
+    input_path =st.file_uploader("Upload a 3d point cloud file.")
 
     
