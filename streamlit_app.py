@@ -8,8 +8,7 @@ import os
 with st.sidebar:
     selected = option_menu(
         menu_title= 'SuperPoint Transformer',
-        menu_icon= 'image/page-icon.png',
-        options= ['🏠 Home', '📚 How To Use', '🛠️ Segmentation Tool'],
+        options= ['🏠 Home', '🛠️ Segmentation Tool'],
         default_index= 0, 
     )
 if selected == '🏠 Home':
@@ -110,18 +109,7 @@ if selected == '🏠 Home':
 
     st.write("Have fun!")
 
-elif selected == '📚 How To Use':
-    st.markdown(
-        """
-        <style>
-        /* Styles for headings and text */
-        h1, h2 {
-            color: #4ecdc4;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+
 
 elif selected == '🛠️ Segmentation Tool':
      # Apply custom CSS styles for the dark theme and improved design
@@ -137,5 +125,8 @@ elif selected == '🛠️ Segmentation Tool':
         unsafe_allow_html=True
     )
     input_path =st.file_uploader("Upload a 3d point cloud file.")
+    data_path = ""
+
+
 
     
