@@ -126,7 +126,7 @@ elif selected == '🛠️ Segmentation Tool':
     )
     input_path =st.file_uploader("Upload a 3d point cloud file.")
     data_path = ""
-    path_to_html = "/workspaces/testing-app/new_superpoint_transformer/my_interactive_visualization.html" 
+    path_to_html = "./new_superpoint_transformer/my_interactive_visualization.html" 
 
     with open(path_to_html,'r') as f: 
         html_data = f.read()
