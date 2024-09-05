@@ -127,6 +127,8 @@ elif selected == '🛠️ Segmentation Tool':
     input_path =st.file_uploader("Upload a 3d point cloud file.")
     data_path = ""
 
+    st.html("./new_superpoint_transformer/my_interactive_visialization.html")
+
 
 
     
