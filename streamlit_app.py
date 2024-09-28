@@ -1,14 +1,41 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-import os
+import os, sys
 from streamlit.components.v1 import html as html_vis
+os.chdir("c:/users/hany5/testing-app/new_superpoint_transformer")
+import torch, numpy as np
+from src.data import Data
+from src.utils.color import to_float_rgb
+import open3d as opd
 
 
+
+# Building a PLY Data reader 
+file_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(file_path)
+
+def read_ply(file_path):
+    """
+    Read a .ply file and return a data object with the following fields:
+    - 'points': (N, 3) numpy array with the point coordinates
+    - 'colors': (N, 3) numpy array with the point colors
+    """
+
+    data = Data()
+    # Read the .ply file using open3d
+    ply = opd.io.read_point_cloud(file_path)
+    
+    # Extract the points and colors
+    data.pos = np.asarray(ply.points).dtype(np.double)
+    data.rgb = (ply.colors)
+
+    # return the data object   
+    return data
 
 with st.sidebar:
     selected = option_menu(
         menu_title= 'SuperPoint Transformer',
-        options= ['🏠 Home', '🛠️ Segmentation Tool'],
+        options= ['🏠 Home', '📚 How To Use', '🛠️ Segmentation Tool'],
         default_index= 0, 
     )
 if selected == '🏠 Home':
@@ -85,7 +112,7 @@ if selected == '🏠 Home':
     st.write("If you like this project, don't forget to visit my github by clicking the github icon in the top right corner and drop a ⭐🤩. It would be greatly appreciated! Thanks in advance!")
 
 
-    st.image("./new_superpoint_transformer/media/teaser_spt.png",output_format="auto")
+    st.image("./media/teaser_spt.png",output_format="auto")
 
     st.markdown("""**Superpoint Transformer (SPT)** is a superpoint-based transformer 🤖 architecture that efficiently ⚡ 
     performs **semantic segmentation** on large-scale 3D scenes. This method includes a 
@@ -103,7 +130,7 @@ if selected == '🏠 Home':
                 | ⚡ **Preprocessing x7 faster than [SPG](https://github.com/loicland/superpoint_graph)** |
     """)
     st.write("This implementation of the model has only been trained on Area 5 of S3DIS, on a T4 GPU machine. Resulting in metrics such as:")
-    st.write("Mean IoU: 67%")
+    st.write("Mean IoU: 68%")
     st.write("Overall Accuracy: 89%")
 
 
@@ -124,9 +151,30 @@ elif selected == '🛠️ Segmentation Tool':
         """,
         unsafe_allow_html=True
     )
-    input_path =st.file_uploader("Upload a 3d point cloud file.")
-    data_path = ""
-    path_to_html = "./new_superpoint_transformer/my_interactive_visualization.html" 
+    input_path = st.file_uploader("Upload a 3d point cloud file.")
+    
+    if input_path:
+        from src.utils import init_config
+        from src.transforms import instatiate_datamodule_transforms
+
+        # we use init_config to load the configuration file and do the exact same preprocessing as in the training pipeline
+        cfg = init_config(overrides=[f"experment=semantic/s3dis_11g"])
+
+        transforms_dict = instantiate_datamodule_transforms(cfg.datamodule)
+#In the next cell, we manually apply some `NAGRemoveKeys()` transform after the `pre_transform`. This is because we ocasionally need to mimick the full behavior of the pretraining `Dataset`: after the `pre_transform` is executed, the preprocessed `NAG` is saved to disk. When later read from disk by the `Dataset`, only the `point_load_keys` attributes of `NAG[0]` and `segment_load_keys` attributes of `NAG[i], i>0` are loaded from disk. This mechanism ensures we only load the strict necessary during training, hence saving I/O time. Since we are running the `pre_transform` manually here, we need to account for this mechanism and discard the preprocessed attributes that the DALES dataset did not read from disk. These can be found in `cfg.datamodule.point_load_keys` and `cfg.datamodule.segment_load_keys`.
+
+        nag = transforms_dict['pre_transform'](data)
+
+
+    
+    
+    
+    
+    
+    path_to_html = "./my_interactive_visualization.html" 
+
+
+
 
     with open(path_to_html,'r') as f: 
         html_data = f.read()
