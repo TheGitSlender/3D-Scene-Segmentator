@@ -7,6 +7,7 @@ import torch, numpy as np
 from src.data import Data
 from src.utils.color import to_float_rgb
 import open3d as opd
+from pyntcloud import PyntCloud
 
 
 
@@ -20,16 +21,22 @@ def read_ply(file_path):
     - 'points': (N, 3) numpy array with the point coordinates
     - 'colors': (N, 3) numpy array with the point colors
     """
+    pcd = PyntCloud.from_file(file_path)
+    
+    points = pcd.points
+    #Extract pos data
+    pos = points[['x', 'y', 'z']].values
+
+    #Extract color data
+    colors = points[['red', 'green', 'blue']].values
+    colors = colors / 255.0
+
 
     data = Data()
-    # Read the .ply file using open3d
-    ply = opd.io.read_point_cloud(file_path)
-    
-    # Extract the points and colors
-    data.pos = np.asarray(ply.points).dtype(np.double)
-    data.rgb = (ply.colors)
 
-    # return the data object   
+    data.pos = torch.tensor(pos, dtype=torch.float32)
+    data.rgb = torch.tensor(colors, dtype=torch.float32)
+    
     return data
 
 with st.sidebar:
@@ -151,35 +158,79 @@ elif selected == '🛠️ Segmentation Tool':
         """,
         unsafe_allow_html=True
     )
-    input_path = st.file_uploader("Upload a 3d point cloud file.")
+    uploaded_file = st.file_uploader("Upload a ply file.",type=['ply'])
+    import tempfile
     
-    if input_path:
+    if uploaded_file is not None:
+        st.write("filename:", uploaded_file.name)
+        from src.data import Data
         from src.utils import init_config
-        from src.transforms import instatiate_datamodule_transforms
+        from src.transforms import instantiate_datamodule_transforms
+        import hydra
 
         # we use init_config to load the configuration file and do the exact same preprocessing as in the training pipeline
-        cfg = init_config(overrides=[f"experment=semantic/s3dis_11g"])
+        cfg = init_config(overrides=[f"experiment=semantic/s3dis"])
 
         transforms_dict = instantiate_datamodule_transforms(cfg.datamodule)
-#In the next cell, we manually apply some `NAGRemoveKeys()` transform after the `pre_transform`. This is because we ocasionally need to mimick the full behavior of the pretraining `Dataset`: after the `pre_transform` is executed, the preprocessed `NAG` is saved to disk. When later read from disk by the `Dataset`, only the `point_load_keys` attributes of `NAG[0]` and `segment_load_keys` attributes of `NAG[i], i>0` are loaded from disk. This mechanism ensures we only load the strict necessary during training, hence saving I/O time. Since we are running the `pre_transform` manually here, we need to account for this mechanism and discard the preprocessed attributes that the DALES dataset did not read from disk. These can be found in `cfg.datamodule.point_load_keys` and `cfg.datamodule.segment_load_keys`.
 
+        temp_dir = tempfile.mkdtemp()
+        path = os.path.join(temp_dir, uploaded_file.name)
+        with open(path, "wb") as f:
+            f.write(uploaded_file.getvalue())
+
+        data = read_ply(path)
         nag = transforms_dict['pre_transform'](data)
+        from src.transforms import NAGRemoveKeys
+
+        nag = NAGRemoveKeys(level=0, keys=[k for k in nag[0].keys if k not in cfg.datamodule.point_load_keys])(nag)
+        nag = NAGRemoveKeys(level='1+', keys=[k for k in nag[1].keys if k not in cfg.datamodule.segment_load_keys])(nag)
+
+        # Move to device
+        nag = nag.cuda()
+
+        # Apply on-device transforms
+        nag = transforms_dict['on_device_test_transform'](nag)
 
 
-    
-    
-    
-    
-    
-    path_to_html = "./my_interactive_visualization.html" 
+        ckpt_path = "./checkpoints/last.ckpt"
+        # Instantiate the model and load pretrained weights
+        model = hydra.utils.instantiate(cfg.model)
+        model = model._load_from_checkpoint(ckpt_path)
 
+        # Set the model in inference mode on the same device as the input
+        model = model.eval().to(nag.device)
 
+        # Inference, returns a task-specific ouput object carrying predictions
+        with torch.no_grad():
+            output = model(nag)
+        # Compute the level-0 (voxel-wise) semantic segmentation predictions 
+        # based on the predictions on level-1 superpoints and save those for 
+        # visualization in the level-0 Data under the 'semantic_pred' attribute
+        nag[0].semantic_pred = output.voxel_semantic_pred(super_index=nag[0].super_index)
 
+        from src.datasets.s3dis import CLASS_NAMES as S3DIS_CLASS_NAMES
+        from src.datasets.s3dis import CLASS_COLORS as S3DIS_CLASS_COLORS
+        from src.datasets.s3dis import STUFF_CLASSES, S3DIS_NUM_CLASSES
 
-    with open(path_to_html,'r') as f: 
-        html_data = f.read()
-    html_vis(html_data,scrolling=True,height =700,width=1200)
+        nag.show(
+            figsize=1000,
+            class_names=S3DIS_CLASS_NAMES,
+            class_colors=S3DIS_CLASS_COLORS,
+            stuff_classes=STUFF_CLASSES,
+            num_classes=S3DIS_NUM_CLASSES,
+            max_points=300000,
+            title="My Interactive Visualization Partition",
+            path="visualization_tests/my_interactive_visualization.html"
+        )
+        
+        path_to_html = "visualization_tests/my_interactive_visualization.html"
+        with open(path_to_html,'r') as f: 
+            html_data = f.read()
+        # button to download the html visualization file
+        st.download_button(label="Download HTML visualization",data=html_data,file_name="my_interactive_visualization.html",mime="text/html")
+        # Visualize the results of the segmentation
+        html_vis(html_data,scrolling=True,height=800,width=1200)
 
-
-
-    
+        # button to download the .pt nag file containing the segmentation results
+        nag.save("./nag_output_files/semantic_segmentation.pt")
+        st.download_button(label="Download Semantic Segmentation:",data="./nag_output_files/semantic_segmentation.pt",file_name="semantic_segmentation.pth",mime="application/octet-stream")

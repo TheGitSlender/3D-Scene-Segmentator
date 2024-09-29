@@ -1049,13 +1049,13 @@ def visualize_3d(
 def figure_html(fig):
     # Save plotly figure to temp HTML
     fig.write_html(
-        '/tmp/fig.html',
+        './tmp/fig.html',
         config={'displayModeBar': False},
         include_plotlyjs='cdn',
         full_html=False)
 
     # Read the HTML
-    with open("/tmp/fig.html", "r") as f:
+    with open("./tmp/fig.html", "r") as f:
         fig_html = f.read()
 
     # Center the figure div for cleaner display

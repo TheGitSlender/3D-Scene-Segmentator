@@ -145,9 +145,9 @@ class GridSampling3D(Transform):
 
         # Convert point coordinates to the voxel grid coordinates
         coords = torch.round((data.pos) / self.grid_size)
-
         # Match each point with a voxel identifier
         if 'batch' not in data:
+            print(coords)
             cluster = grid_cluster(coords, torch.ones(3, device=coords.device))
         else:
             cluster = voxel_grid(coords, data.batch, 1)
