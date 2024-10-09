@@ -6,7 +6,6 @@ os.chdir("c:/users/hany5/testing-app/new_superpoint_transformer")
 import torch, numpy as np
 from src.data import Data
 from src.utils.color import to_float_rgb
-import open3d as opd
 from pyntcloud import PyntCloud
 
 
@@ -39,12 +38,17 @@ def read_ply(file_path):
     
     return data
 
+
+# Building the left sidebar menu
 with st.sidebar:
     selected = option_menu(
         menu_title= 'SuperPoint Transformer',
         options= ['🏠 Home', '📚 How To Use', '🛠️ Segmentation Tool'],
         default_index= 0, 
     )
+
+# Building the main content of the app
+## Home page
 if selected == '🏠 Home':
     
     # Apply custom CSS styles for the dark theme and improved design
@@ -144,7 +148,7 @@ if selected == '🏠 Home':
     st.write("Have fun!")
 
 
-
+## Building The segmentation tool
 elif selected == '🛠️ Segmentation Tool':
      # Apply custom CSS styles for the dark theme and improved design
     st.markdown(
@@ -224,13 +228,15 @@ elif selected == '🛠️ Segmentation Tool':
         )
         
         path_to_html = "visualization_tests/my_interactive_visualization.html"
-        with open(path_to_html,'r') as f: 
+        with open(path_to_html,'r') as f:
             html_data = f.read()
+
         # button to download the html visualization file
         st.download_button(label="Download HTML visualization",data=html_data,file_name="my_interactive_visualization.html",mime="text/html")
-        # Visualize the results of the segmentation
-        html_vis(html_data,scrolling=True,height=800,width=1200)
 
         # button to download the .pt nag file containing the segmentation results
         nag.save("./nag_output_files/semantic_segmentation.pt")
         st.download_button(label="Download Semantic Segmentation:",data="./nag_output_files/semantic_segmentation.pt",file_name="semantic_segmentation.pth",mime="application/octet-stream")
+        
+        # Visualize the results of the segmentation
+        html_vis(html_data,scrolling=True,height=800,width=1200)
