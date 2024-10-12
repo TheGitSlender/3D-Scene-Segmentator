@@ -12,8 +12,9 @@ This is a local implementation of the Superpoint Transformer model in windows 11
 
 It has been trained on S3DIS and has 13 classes.
 <p align="center">
-  <img width="80%" src="./media/Picture1.png">
+  <img width="80%" src="./media/Picture2.png">
 </p>
+
 If you like to the work, make sure to leave a ⭐! 
 
 
@@ -21,5 +22,5 @@ If you like to the work, make sure to leave a ⭐!
 
 Make sure to install the pip dependencies presented in requirements.txt, as well as follow the original Superpoint Model repository for the full model setup. https://github.com/drprojects/superpoint_transformer
 
-For windows installation, I manually picked and installed the dependencies needed (pip libraries and git repos). Make sure the python torch and cuda versions are correct and compatible before running.
+For windows installation, I manually picked and installed the dependencies needed (pip libraries and git repos). Make sure the python torch and cuda versions are correct and compatible before running. (python==3.8.19, torch==2.2.0+cu121, cuda_version=v12.5)
 
