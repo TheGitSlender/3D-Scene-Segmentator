@@ -24,3 +24,4 @@ Make sure to install the pip dependencies presented in requirements.txt, as well
 
 For windows installation, I manually picked and installed the dependencies needed (pip libraries and git repos). Make sure the python torch and cuda versions are correct and compatible before running. (python==3.8.19, torch==2.2.0+cu121, cuda_version=v12.5)
 
+In streamlit_app.py, line 5, make sure to change the directory to your own working directory for a clean local deployment.
